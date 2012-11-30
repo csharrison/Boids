@@ -6,12 +6,39 @@ max_speed = 5;
 dimx = 0;
 dimy = 0;
 boids = [];
+block_size = 50;//px
+blocks = [];
 
 function resize(){
-	dimx = window.innerWidth;
-	dimy = window.innerHeight;
+	dimx = Math.floor(window.innerWidth/block_size)*block_size;
+	dimy = Math.floor(window.innerHeight/block_size)*block_size;
 	c.setAttribute("width",dimx);
 	c.setAttribute("height", dimy);
+
+	blocks = [];
+	for(var i = 0; i < dimy/block_size ; i++){
+		var row = [];
+		for(var j = 0; j < dimx/block_size ; j++){
+			row.push([]);
+		}
+		blocks[i] = row;
+	}
+}
+function get_block(x,y){
+	block_x = Math.floor(x/block_size);
+	block_y = Math.floor(y/block_size);
+	return blocks[block_y][block_x];
+}
+function set_block(boid, new_block){
+	var old_block = boid.block;
+	var i = old_block.indexOf(boid);
+	if(i != -1){
+		old_block.splice(i,1);
+		new_block.push(boid);
+		boid.block = new_block;
+	}else{
+		console.log("FUCK");
+	}
 }
 function mod(x,y){
 	return ((x%y) + y)%y;
@@ -70,19 +97,25 @@ function update(boid){
 
 	var i = 0;
 	var l = boids.length;
+	var h = 3
 	var too_close = 0;
 	var tcx = 0;
 	var tcy = 0;
 	var neighbors = [];
 	var n = 0;
-	for(i = 0; i < l ; i++){
-		b = boids[i];
-		var d = distance(x,y,b.x,b.y)
-		if(d < 10){
-			tcx += b.x;
-			tcy += b.y;
-			too_close += 1;
-		}if(d < 70) neighbors.push(b);
+	for(i = x-block_size; i <= x+block_size ; i+=block_size){
+		for(var j = y-block_size; j <= y+block_size ; j+=block_size){
+			var neighbor_bs = get_block(mod(i,dimx),mod(j,dimy));
+			for(var n = 0; n<neighbor_bs.length;n++){
+				b = neighbor_bs[n];
+				var d = distance(x,y,b.x,b.y)
+				if(d < 10){
+					tcx += b.x;
+					tcy += b.y;
+					too_close += 1;
+				}if(d < 70) neighbors.push(b);
+			}
+		}
 	}
 	var xaccel = 0;
 	var yaccel = 0;
@@ -126,6 +159,11 @@ function update(boid){
 	boid.x = mod(x + vx,dimx);
 	boid.y = mod(y + vy, dimy);
 
+	var new_block = get_block(boid.x,boid.y);
+	if(new_block != boid.block){
+		set_block(boid, new_block);
+	}
+
 	if(boid.evil) ctx.fillStyle="#FF0000";
 	else ctx.fillStyle="#FFFFFF";
 
@@ -137,13 +175,19 @@ function clear(boid){
 }
 
 function new_boid(x,y, evil, vx,vy){
-	return {
-		"x" : x,
-		"y" : y,
+	var xx = mod(x,dimx);
+	var yy = mod(y,dimy);
+	var block = get_block(xx,yy);
+	var b = {
+		"x" : xx,
+		"y" : yy,
 		"evil" : evil ? evil : 0,
 		"vx" : vx ? vx : 0. ,
-		"vy" : vy ? vy : 0.
+		"vy" : vy ? vy : 0.,
+		"block" : block
 	};
+	block.push(b);
+	return b;
 }
 
 function run(){
@@ -168,12 +212,16 @@ function setup(){
 	resize();
 
 	var i = 0;
-	for(i = 0; i < 500 ; i++){
-		x = new_boid(400,400, (Math.ceil(Math.random()-.7)), (Math.random() - .5) * 10,  (Math.random() - .5) * 10);
-		x.x = Math.random() * 2000;
-		x.y = Math.random() * 2000;
+	for(i = 0; i < 2000 ; i++){
+		x = new_boid(
+			Math.random() * 2000,
+			Math.random() * 2000, 
+			(Math.ceil(Math.random()-.7)), 
+			(Math.random() - .5) * 10,  
+			(Math.random() - .5) * 10);
 		//x.evil = 0;
 		boids.push(x);
 	}
+	//run();
 	interval = setInterval(run, 10);
 }
