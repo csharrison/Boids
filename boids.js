@@ -5,24 +5,25 @@ ctx.fillStyle="#000000";
 max_speed = 5;
 dimx = 0;
 dimy = 0;
+boids = [];
+
 function resize(){
 	dimx = window.innerWidth;
 	dimy = window.innerHeight;
 	c.setAttribute("width",dimx);
 	c.setAttribute("height", dimy);
 }
-window.onresize = resize;
-resize();
-
-boids = [];
-
 function mod(x,y){
 	return ((x%y) + y)%y;
 }
 function distance(x,y,x2,y2){
 	return Math.sqrt(Math.pow(x2-x, 2) + Math.pow(y2 - y, 2));
 }
-
+function normalize(x,y){//normalize the vector
+	var length = Math.sqrt(Math.pow(x,2) + Math.pow(y,2));
+	if(length) return [x/length, y/length];
+	return [0.0,0.0];
+}
 function get_averages(neighbors){
 	var l = neighbors.length;
 	var xavg_prey,yavg_prey,vxavg_prey,vyavg_prey = 0;
@@ -77,101 +78,62 @@ function update(boid){
 	for(i = 0; i < l ; i++){
 		b = boids[i];
 		var d = distance(x,y,b.x,b.y)
-		if(d < 20){
+		if(d < 10){
 			tcx += b.x;
 			tcy += b.y;
 			too_close += 1;
-		}if(d < 120) neighbors.push(b);
+		}if(d < 70) neighbors.push(b);
 	}
-
-	if(n != 0){
-		vy = vy + (summedvy/n)/6.;
-		vx = vx + (summedvx/n)/6.;
-		avgx = summedx/n;
-		avgy = summedy/n;
-		vx += (avgx-x)/30.;
-		vy += (avgy-y)/30.;
-	}if(too_close !=0){
-		vx = vx - (tcx/too_close -x)/3.;
-		vy = vy - (tcy/too_close -y)/3.;
+	var xaccel = 0;
+	var yaccel = 0;
+	if(too_close > 0){
+		xaccel -= (tcx/too_close -x)/1.5;
+		yaccel -= (tcy/too_close -y)/1.5;
 	}
+	var ret = get_averages(neighbors);
+	var prey = ret[0];
+	var pred = ret[1];
 
-	if(distance(vx,vy,0,0) < max_speed){
-		boid.vy = vy;
-		boid.vx = vx;
+	if(prey[0] != NaN){//prey
+		prey = ret[0];
+		if(evil){
+			xaccel += (prey[0] - x)/30. + (prey[2])/6.;
+			yaccel += (prey[1] - y)/30. + (prey[3])/6.;
+		}else{
+			xaccel += ((prey[0] - x)/30. + (prey[2])/6.);
+			yaccel += ((prey[1] - y)/30. + (prey[3])/6.);
+		}
+
 	}
-	boid.x = mod(x + vx,dimx);
-	boid.y = mod(y + vy, dimy);
-	if(boid.evil){
-		ctx.fillStyle="#FF0000";
-	}else{
-		ctx.fillStyle="#FFFFFF";
-	}
-	ctx.fillRect(boid.x,boid.y,5,5);
-}
-
-function update2(boid){
-	var x = boid.x;
-	var y = boid.y;
-	var vx = boid.vx;
-	var vy = boid.vy;
-	var evil = boid.evil;
-
-	var i = 0;
-	var l = boids.length;
-	var summedx = 0;
-	var summedy = 0;
-	var summedvx = 0;
-	var summedvy = 0;
-	var n = 0;
-	var too_close = 0;
-	var tcx = 0;
-	var tcy = 0;
-	for(i = 0; i < l ; i++){
-		b = boids[i];
-		bx = b.x;
-		by = b.y;
-		var same = (b.evil == evil) ? 1 : 0;
-		var d = distance(x,y,bx,by)
-		if(d < 20){
-			tcx += bx;
-			tcy += by;
-			too_close += 1;
-		}if(d < 120){
-			summedx += bx;
-			summedy += by;
-			summedvx += b.vx;
-			summedvy += b.vy;
-			n += 1;
+	if(! isNaN(pred[0])){
+		pred = ret[1];
+		if(evil){
+			xaccel += (pred[0] - x)/30. + (pred[2])/6.;
+			yaccel += (pred[1] - y)/30. + (pred[3])/6.;
+		}else{
+			xaccel -= (pred[0] - x)/30. + (pred[2])/6.;
+			yaccel -= (pred[1] - y)/30. + (pred[3])/6.;
 		}
 	}
-	if(n != 0){
-		vy = vy + (summedvy/n)/6.;
-		vx = vx + (summedvx/n)/6.;
-		avgx = summedx/n;
-		avgy = summedy/n;
-		vx += (avgx-x)/30.;
-		vy += (avgy-y)/30.;
-	}if(too_close !=0){
-		vx = vx - (tcx/too_close -x)/2.;
-		vy = vy - (tcy/too_close -y)/2.;
-	}
+	accel = normalize(xaccel,yaccel);
+	xaccel = accel[0];
+	yaccel = accel[1];
 
-	if(distance(vx,vy,0,0) < max_speed){
-		boid.vy = vy;
-		boid.vx = vx;
-	}
+	vel = normalize(vx + xaccel, vy + yaccel);
+	boid.vx = vel[0]*max_speed;
+	boid.vy = vel[1]*max_speed;
+
 	boid.x = mod(x + vx,dimx);
 	boid.y = mod(y + vy, dimy);
-	if(boid.evil){
-		ctx.fillStyle="#FF0000";
-	}else{
-		ctx.fillStyle="#FFFFFF";
-	}
-	ctx.fillRect(boid.x,boid.y,5,5);
+
+	if(boid.evil) ctx.fillStyle="#FF0000";
+	else ctx.fillStyle="#FFFFFF";
+
+	ctx.fillRect(boid.x,boid.y,3,3);
 }
+
 function clear(boid){
-	ctx.clearRect(boid.x-1,boid.y-1,7,7);
+	ctx.clearRect(boid.x-1,boid.y-1,5,5);
 }
 
 function new_boid(x,y, evil, vx,vy){
@@ -184,12 +146,6 @@ function new_boid(x,y, evil, vx,vy){
 	};
 }
 
-var i = 0;
-for(i = 0; i < 500 ; i++){
-	x = new_boid(400,400, (Math.ceil(Math.random()-.5)), (Math.random() - .5) * 15,  (Math.random() - .5) * 15);
-	x.x = Math.random() * 2000;
-	boids.push(x);
-}
 function run(){
 	l = boids.length;
 	for(var i = 0; i < l ; i++){
@@ -200,5 +156,24 @@ function run(){
 	}
 }
 
+function pause(){
+	if(interval){
+		interval = clearInterval(interval);
+	}else{
+		interval = setInterval(run, 10);
+	}
+}
+function setup(){
+	window.onresize = resize;
+	resize();
 
-setInterval(run, 1);
+	var i = 0;
+	for(i = 0; i < 500 ; i++){
+		x = new_boid(400,400, (Math.ceil(Math.random()-.7)), (Math.random() - .5) * 10,  (Math.random() - .5) * 10);
+		x.x = Math.random() * 2000;
+		x.y = Math.random() * 2000;
+		//x.evil = 0;
+		boids.push(x);
+	}
+	interval = setInterval(run, 10);
+}
