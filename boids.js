@@ -1,10 +1,19 @@
 var c=document.getElementById("the_canvas");
 var ctx=c.getContext("2d");
 ctx.fillStyle="#000000";
+ctx.globalAlpha = 0.5;
+ctx.globalCompositeOperation = "copy";
+
 
 max_speed = 5;
 dimx = 0;
 dimy = 0;
+mx = 0;
+my = 0;//mouse pos
+mousedown = false;
+adown = false;
+ddown = false;
+
 boids = [];
 block_size = 50;//px
 blocks = [];
@@ -104,7 +113,7 @@ function update(boid){
 	var neighbors = [];
 	var n = 0;
 	for(i = x-block_size; i <= x+block_size ; i+=block_size){
-		for(var j = y-block_size; j <= y+block_size ; j+=block_size){
+		for(var j = y-block_size*2; j <= y+block_size*2 ; j+=block_size){
 			var neighbor_bs = get_block(mod(i,dimx),mod(j,dimy));
 			for(var n = 0; n<neighbor_bs.length;n++){
 				b = neighbor_bs[n];
@@ -127,11 +136,11 @@ function update(boid){
 	var prey = ret[0];
 	var pred = ret[1];
 
-	if(prey[0] != NaN){//prey
+	if(! isNaN(prey[0])){//prey
 		prey = ret[0];
 		if(evil){
-			xaccel += (prey[0] - x)/30. + (prey[2])/6.;
-			yaccel += (prey[1] - y)/30. + (prey[3])/6.;
+			xaccel += 2*((prey[0] - x)/30. + (prey[2])/6.);
+			yaccel += 2*((prey[1] - y)/30. + (prey[3])/6.);
 		}else{
 			xaccel += ((prey[0] - x)/30. + (prey[2])/6.);
 			yaccel += ((prey[1] - y)/30. + (prey[3])/6.);
@@ -149,8 +158,12 @@ function update(boid){
 		}
 	}
 	accel = normalize(xaccel,yaccel);
+	
 	xaccel = accel[0];
 	yaccel = accel[1];
+	if(mousedown){
+		xaccel *= -1; yaccel *=-1;
+	}
 
 	vel = normalize(vx + xaccel, vy + yaccel);
 	boid.vx = vel[0]*max_speed;
@@ -165,13 +178,15 @@ function update(boid){
 	}
 
 	if(boid.evil) ctx.fillStyle="#FF0000";
-	else ctx.fillStyle="#FFFFFF";
+	else ctx.fillStyle="#00FF00";
 
 	ctx.fillRect(boid.x,boid.y,3,3);
 }
 
 function clear(boid){
-	ctx.clearRect(boid.x-1,boid.y-1,5,5);
+	//ctx.clearRect(boid.x-1,boid.y-1,5,5);
+	//ctx.fillStyle = boid.evil ? "rgba(100,0,0,.5)" : "rgba(100,100,100,.1)";
+	//ctx.fillRect(boid.x,boid.y,2,2);
 }
 
 function new_boid(x,y, evil, vx,vy){
@@ -191,12 +206,26 @@ function new_boid(x,y, evil, vx,vy){
 }
 
 function run(){
+	ctx.fillStyle = "rgba(0,0,0,.05)";
+	ctx.fillRect(0,0,dimx,dimy);
+
 	l = boids.length;
-	for(var i = 0; i < l ; i++){
-		clear(boids[i]);
-	}
+	//for(var i = 0; i < l ; i++){
+	//	clear(boids[i]);
+	//}
 	for(var i = 0; i < l ; i++){
 		update(boids[i]);
+	}
+	if(ddown || adown){
+		var evil = ddown ? 0 : 1;
+		x = new_boid(
+			mx,
+			my, 
+			evil, 
+			(Math.random() - .5) * 10,  
+			(Math.random() - .5) * 10);
+		//x.evil = 0;
+		boids.push(x);
 	}
 }
 
@@ -212,16 +241,33 @@ function setup(){
 	resize();
 
 	var i = 0;
-	for(i = 0; i < 2000 ; i++){
+	for(i = 0; i < 1500 ; i++){
 		x = new_boid(
-			Math.random() * 2000,
-			Math.random() * 2000, 
-			(Math.ceil(Math.random()-.7)), 
+			Math.random() * 3000,
+			Math.random() * 3000, 
+			(Math.ceil(Math.random()-.8)), 
 			(Math.random() - .5) * 10,  
 			(Math.random() - .5) * 10);
-		//x.evil = 0;
+		//x.evil = 1;
 		boids.push(x);
 	}
+
+	$(document).mousemove(function(e){
+	      mx = e.pageX;
+	      my = e.pageY;
+   	}).mousedown(function(e){
+   		mousedown = true;
+   	}).mouseup(function(e){
+   		mousedown = false;
+   	}).keydown(function(e){
+   		var w = String.fromCharCode(e.which);
+   		if(w === "A") adown = true;
+   		else if (w === "D") ddown = true;
+   	}).keyup(function(e){
+   		var w = String.fromCharCode(e.which);
+   		if(w === "A") adown = false;
+   		else if (w === "D") ddown = false;
+   	});
 	//run();
-	interval = setInterval(run, 10);
+	interval = setInterval(run, 30);
 }
