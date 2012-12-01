@@ -14,16 +14,18 @@ mousedown = false;
 adown = false;
 ddown = false;
 
+trails = 40;
+
 boids = [];
 block_size = 50;//px
 blocks = [];
 
 function resize(){
-	dimx = Math.floor(window.innerWidth/block_size)*block_size;
+	dimx = Math.floor(window.innerWidth/block_size)*block_size-300;
 	dimy = Math.floor(window.innerHeight/block_size)*block_size;
 	c.setAttribute("width",dimx);
 	c.setAttribute("height", dimy);
-
+	$("#controls").css({'height':dimy-10});
 	blocks = [];
 	for(var i = 0; i < dimy/block_size ; i++){
 		var row = [];
@@ -216,7 +218,8 @@ function new_boid(x,y, evil, vx,vy){
 }
 
 function run(){
-	ctx.fillStyle = "rgba(0,0,0,.2)";
+	var opa = String((trails)*.005);
+	ctx.fillStyle = "rgba(0,0,0,"+opa+")";
 	ctx.fillRect(0,0,dimx,dimy);
 
 	l = boids.length;
@@ -262,14 +265,15 @@ function setup(){
 		boids.push(x);
 	}
 
-	$(document).mousemove(function(e){
+	$("canvas").mousemove(function(e){
 	      mx = e.pageX;
 	      my = e.pageY;
    	}).mousedown(function(e){
    		mousedown = true;
    	}).mouseup(function(e){
    		mousedown = false;
-   	}).keydown(function(e){
+   	});
+   	$(document).keydown(function(e){
    		var w = String.fromCharCode(e.which);
    		if(w === "A") adown = true;
    		else if (w === "D") ddown = true;
@@ -279,6 +283,11 @@ function setup(){
    		if(w === "A") adown = false;
    		else if (w === "D") ddown = false;
    	});
+
+   	$("#trails").change(function(){
+   		trails = parseInt($("#trails").attr('value'));
+   	})
+
 	//run();
 	interval = setInterval(run, 5);
 }
