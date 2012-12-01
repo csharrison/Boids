@@ -5,7 +5,8 @@ ctx.globalAlpha = 0.5;
 ctx.globalCompositeOperation = "copy";
 
 
-max_speed = 5;
+max_speed = 4;
+max_accel = .8;
 dimx = 0;
 dimy = 0;
 mx = 0;
@@ -21,7 +22,7 @@ block_size = 50;//px
 blocks = [];
 
 function resize(){
-	dimx = Math.floor(window.innerWidth/block_size)*block_size-300;
+	dimx = Math.floor(window.innerWidth/block_size)*block_size-200;
 	dimy = Math.floor(window.innerHeight/block_size)*block_size;
 	c.setAttribute("width",dimx);
 	c.setAttribute("height", dimy);
@@ -171,8 +172,8 @@ function update(boid){
 	}
 	accel = normalize(xaccel,yaccel);
 	
-	xaccel = accel[0];
-	yaccel = accel[1];
+	xaccel = accel[0]*max_accel;
+	yaccel = accel[1]*max_accel;
 	if(mousedown){
 		xaccel *= -1; yaccel *=-1;
 	}
@@ -254,7 +255,7 @@ function setup(){
 	resize();
 
 	var i = 0;
-	for(i = 0; i < 1500 ; i++){
+	for(i = 0; i < 100 ; i++){
 		x = new_boid(
 			Math.random() * 3000,
 			Math.random() * 3000, 
@@ -289,5 +290,5 @@ function setup(){
    	})
 
 	//run();
-	interval = setInterval(run, 5);
+	interval = setInterval(run, 30);
 }
