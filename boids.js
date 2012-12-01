@@ -6,7 +6,7 @@ ctx.globalCompositeOperation = "copy";
 
 
 max_speed = 4;
-max_accel = .8;
+max_accel = .5;
 dimx = 0;
 dimy = 0;
 mx = 0;
@@ -104,6 +104,7 @@ function get_averages(neighbors){
 }
 
 function update(boid){
+	var dead = false;
 	var x = boid.x;
 	var y = boid.y;
 	var vx = boid.vx;
@@ -123,11 +124,15 @@ function update(boid){
 			var neighbor_bs = get_block(mod(i,dimx),mod(j,dimy));
 			for(var n = 0; n<neighbor_bs.length;n++){
 				b = neighbor_bs[n];
+				if(b === boid) continue;
 				var d = distance(x,y,b.x,b.y)
 				if(d < 10){
 					tcx += b.x;
 					tcy += b.y;
 					too_close += 1;
+					if(d < 5 && evil === 0 && b.evil === 1){
+						dead = true;
+					}
 				}if(d < 70) neighbors.push(b);
 			}
 		}
@@ -194,6 +199,7 @@ function update(boid){
 	else ctx.fillStyle="#00FF00";
 
 	ctx.fillRect(boid.x,boid.y,3,3);
+	return dead;
 }
 
 function clear(boid){
@@ -227,8 +233,19 @@ function run(){
 	//for(var i = 0; i < l ; i++){
 	//	clear(boids[i]);
 	//}
+	dead = [];
 	for(var i = 0; i < l ; i++){
-		update(boids[i]);
+		if(update(boids[i])){//returns whether or not you died
+			dead.push(boids[i]);
+		}
+	}
+	for(var d = 0; d < dead.length; d++){
+		var i = boids.indexOf(dead[d]);
+		var boid = boids[i];
+
+		var block = boid.block;
+		block.splice(block.indexOf(boid),1)
+		boids.splice(i,1);
 	}
 	if(ddown || adown){
 		var evil = ddown ? 0 : 1;
