@@ -46,14 +46,17 @@ function set_block(boid, new_block){
 		new_block.push(boid);
 		boid.block = new_block;
 	}else{
-		console.log("FUCK");
+		console.log("oops");
 	}
 }
 function mod(x,y){
 	return ((x%y) + y)%y;
 }
+function distance_sqr(x,y,x2,y2){
+	return Math.pow(x2-x, 2) + Math.pow(y2 - y, 2);
+}
 function distance(x,y,x2,y2){
-	return Math.sqrt(Math.pow(x2-x, 2) + Math.pow(y2 - y, 2));
+	return Math.sqrt(distance_sqr(x,y,x2,y2));
 }
 function normalize(x,y){//normalize the vector
 	var length = Math.sqrt(Math.pow(x,2) + Math.pow(y,2));
@@ -152,9 +155,16 @@ function update(boid){
 		if(evil){
 			xaccel += (pred[0] - x)/30. + (pred[2])/6.;
 			yaccel += (pred[1] - y)/30. + (pred[3])/6.;
-		}else{
-			xaccel -= (pred[0] - x)/30. + (pred[2])/6.;
-			yaccel -= (pred[1] - y)/30. + (pred[3])/6.;
+		}else{//run from predators
+			var vxavg = pred[2]/6.;
+			var vyavg = pred[3]/6.;
+			if(distance_sqr(x - vyavg, y + vxavg, pred[0],pred[1]) > distance_sqr(x + vyavg, y - vxavg, pred[0], pred[1])) {
+				yaccel += (pred[0] - x)/30 * 0. + (pred[2])/6.;
+				xaccel -= (pred[1] - y)/30. * 0. + (pred[3])/6.;
+			}else{
+				yaccel -= (pred[0] - x)/30 * 0. + (pred[2])/6.;
+				xaccel += (pred[1] - y)/30. * 0. + (pred[3])/6.;
+			}
 		}
 	}
 	accel = normalize(xaccel,yaccel);
@@ -206,7 +216,7 @@ function new_boid(x,y, evil, vx,vy){
 }
 
 function run(){
-	ctx.fillStyle = "rgba(0,0,0,.05)";
+	ctx.fillStyle = "rgba(0,0,0,.2)";
 	ctx.fillRect(0,0,dimx,dimy);
 
 	l = boids.length;
@@ -263,11 +273,12 @@ function setup(){
    		var w = String.fromCharCode(e.which);
    		if(w === "A") adown = true;
    		else if (w === "D") ddown = true;
+   		else if (w === "P") pause();
    	}).keyup(function(e){
    		var w = String.fromCharCode(e.which);
    		if(w === "A") adown = false;
    		else if (w === "D") ddown = false;
    	});
 	//run();
-	interval = setInterval(run, 30);
+	interval = setInterval(run, 5);
 }
