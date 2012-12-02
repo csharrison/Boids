@@ -131,7 +131,7 @@ function update(boid){
 					tcy += b.y;
 					too_close += 1;
 					if(d < 5 && evil === 0 && b.evil === 1){
-						dead = true;
+						//dead = true;
 					}
 				}if(d < 70) neighbors.push(b);
 			}
@@ -272,7 +272,7 @@ function setup(){
 	resize();
 
 	var i = 0;
-	for(i = 0; i < 100 ; i++){
+	for(i = 0; i < 500 ; i++){
 		x = new_boid(
 			Math.random() * 3000,
 			Math.random() * 3000, 
@@ -304,7 +304,14 @@ function setup(){
 
    	$("#trails").change(function(){
    		trails = parseInt($("#trails").attr('value'));
-   	})
+   	});
+   	$("#clear").click(function(){
+   		for(var i = 0; i < boids.length; i++){
+   			var block = boids[i].block;
+   			block.splice(0, block.length);
+   		}
+   		boids = [];
+   	});
 
 	//run();
 	interval = setInterval(run, 30);
