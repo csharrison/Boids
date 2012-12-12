@@ -6,7 +6,7 @@ ctx.globalCompositeOperation = "copy";
 
 
 max_speed = 4;
-max_accel = .5;
+max_accel = 1;
 dimx = 0;
 dimy = 0;
 mx = 0;
@@ -18,9 +18,14 @@ ddown = false;
 trails = 40;
 
 boids = [];
-block_size = 50;//px
+block_size = 50.;//px
 blocks = [];
 
+interval_length = 30;
+
+too_close_percent = 1;
+rep_dist = 10;
+neighborhood_size = 70.;
 function resize(){
 	dimx = Math.floor(window.innerWidth/block_size)*block_size-200;
 	dimy = Math.floor(window.innerHeight/block_size)*block_size;
@@ -119,29 +124,32 @@ function update(boid){
 	var tcy = 0;
 	var neighbors = [];
 	var n = 0;
-	for(i = x-block_size; i <= x+block_size ; i+=block_size){
-		for(var j = y-block_size*2; j <= y+block_size*2 ; j+=block_size){
+	var stride = Math.ceil(Math.ceil(neighborhood_size/block_size));
+	stride = Math.max(1,stride) * block_size;
+	//console.log(stride);
+	for(i = x-stride; i <= x+stride ; i+=block_size){
+		for(var j = y-stride; j <= y+stride ; j+=block_size){
 			var neighbor_bs = get_block(mod(i,dimx),mod(j,dimy));
 			for(var n = 0; n<neighbor_bs.length;n++){
 				b = neighbor_bs[n];
 				if(b === boid) continue;
 				var d = distance(x,y,b.x,b.y)
-				if(d < 10){
+				if(d < rep_dist){
 					tcx += b.x;
 					tcy += b.y;
 					too_close += 1;
 					if(d < 5 && evil === 0 && b.evil === 1){
 						//dead = true;
 					}
-				}if(d < 70) neighbors.push(b);
+				}if(d < neighborhood_size) neighbors.push(b);
 			}
 		}
 	}
 	var xaccel = 0;
 	var yaccel = 0;
 	if(too_close > 0){
-		xaccel -= (tcx/too_close -x)/1.5;
-		yaccel -= (tcy/too_close -y)/1.5;
+		xaccel -= (tcx/too_close -x) * too_close_percent;
+		yaccel -= (tcy/too_close -y) * too_close_percent;
 	}
 	var ret = get_averages(neighbors);
 	var prey = ret[0];
@@ -167,28 +175,35 @@ function update(boid){
 			var vxavg = pred[2]/6.;
 			var vyavg = pred[3]/6.;
 			if(distance_sqr(x - vyavg, y + vxavg, pred[0],pred[1]) > distance_sqr(x + vyavg, y - vxavg, pred[0], pred[1])) {
-				yaccel += (pred[0] - x)/30 * 0. + (pred[2])/6.;
-				xaccel -= (pred[1] - y)/30. * 0. + (pred[3])/6.;
+				yaccel += (pred[0] - x)/30 * 0. + (pred[2])/1.;
+				xaccel -= (pred[1] - y)/30. * 0. + (pred[3])/1.;
 			}else{
-				yaccel -= (pred[0] - x)/30 * 0. + (pred[2])/6.;
-				xaccel += (pred[1] - y)/30. * 0. + (pred[3])/6.;
+				yaccel -= (pred[0] - x)/30 * 0. + (pred[2])/1.;
+				xaccel += (pred[1] - y)/30. * 0. + (pred[3])/1.;
 			}
 		}
 	}
-	accel = normalize(xaccel,yaccel);
-	
-	xaccel = accel[0]*max_accel;
-	yaccel = accel[1]*max_accel;
+
+	if(distance(xaccel,yaccel,0,0) > max_accel){
+		accel = normalize(xaccel,yaccel);
+
+		xaccel = accel[0]*max_accel;
+		yaccel = accel[1]*max_accel;
+	}
 	if(mousedown){
 		xaccel *= -1; yaccel *=-1;
 	}
 
-	vel = normalize(vx + xaccel, vy + yaccel);
-	boid.vx = vel[0]*max_speed;
-	boid.vy = vel[1]*max_speed;
+	boid.vx += xaccel;
+	boid.vy += yaccel;
+	if(distance(boid.vx, boid.vy,0,0) > max_speed){
+		vel = normalize(boid.vx , boid.vy);
+		boid.vx = vel[0]*max_speed;
+		boid.vy = vel[1]*max_speed;
+	}
 
-	boid.x = mod(x + vx,dimx);
-	boid.y = mod(y + vy, dimy);
+	boid.x = mod(x + boid.vx, dimx);
+	boid.y = mod(y + boid.vy, dimy);
 
 	var new_block = get_block(boid.x,boid.y);
 	if(new_block != boid.block){
@@ -200,12 +215,6 @@ function update(boid){
 
 	ctx.fillRect(boid.x,boid.y,3,3);
 	return dead;
-}
-
-function clear(boid){
-	//ctx.clearRect(boid.x-1,boid.y-1,5,5);
-	//ctx.fillStyle = boid.evil ? "rgba(100,0,0,.5)" : "rgba(100,100,100,.1)";
-	//ctx.fillRect(boid.x,boid.y,2,2);
 }
 
 function new_boid(x,y, evil, vx,vy){
@@ -253,8 +262,8 @@ function run(){
 			mx,
 			my, 
 			evil, 
-			(Math.random() - .5) * 10,  
-			(Math.random() - .5) * 10);
+			(Math.random() - .5) *  11,  
+			(Math.random() - .5) * 11);
 		//x.evil = 0;
 		boids.push(x);
 	}
@@ -264,7 +273,7 @@ function pause(){
 	if(interval){
 		interval = clearInterval(interval);
 	}else{
-		interval = setInterval(run, 10);
+		interval = setInterval(run, interval_length);
 	}
 }
 function setup(){
@@ -272,13 +281,13 @@ function setup(){
 	resize();
 
 	var i = 0;
-	for(i = 0; i < 500 ; i++){
+	for(i = 0; i < 0 ; i++){
 		x = new_boid(
 			Math.random() * 3000,
 			Math.random() * 3000, 
 			(Math.ceil(Math.random()-.8)), 
-			(Math.random() - .5) * 10,  
-			(Math.random() - .5) * 10);
+			(Math.random() - .5) * 2,  
+			(Math.random() - .5) * 2);
 		//x.evil = 1;
 		boids.push(x);
 	}
@@ -305,6 +314,16 @@ function setup(){
    	$("#trails").change(function(){
    		trails = parseInt($("#trails").attr('value'));
    	});
+   	$("#repulsion").change(function(){
+   		too_close_percent = (parseInt($("#repulsion").attr("value"))) / 100.;
+   	});
+   	$("#rep_dist").change(function(){
+   		rep_dist = parseInt($("#rep_dist").attr("value"));
+   	});
+   	$("#attract_dist").change(function(){
+   		neighborhood_size = parseInt($("#attract_dist").attr("value"));
+   		console.log(neighborhood_size);
+   	});
    	$("#clear").click(function(){
    		for(var i = 0; i < boids.length; i++){
    			var block = boids[i].block;
@@ -314,5 +333,5 @@ function setup(){
    	});
 
 	//run();
-	interval = setInterval(run, 30);
+	interval = setInterval(run, interval_length);
 }
