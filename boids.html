@@ -11,23 +11,49 @@
 			<td><input id="trails" type="range" min="0" max="100" value="40" /></td>
 		</tr>
 		<tr>
-			<td><span>repulsion</span></td>
-			<td><input id="repulsion" type="range" min="0" max="120" value="50" /></td>
-		</tr>
-		<tr>
 			<td><span>rep dist</span></td>
-			<td><input id="rep_dist" type="range" min="0" max="50" value="10" /></td>
+			<td><input id="rep_dist" type="range" min="0" max="50" value="15" /></td>
 		</tr>
 		<tr>
 			<td><span>n size</span></td>
-			<td><input id="attract_dist" type="range" min="0" max="300" value="70" /></td>
+			<td><input id="attract_dist" type="range" min="0" max="300" value="50" /></td>
+		</tr>
+		<tr>
+			<td><span>block size</span></td>
+			<td><input id="block_size" type="range" min="5" max="200" value="50" /></td>
+		</tr>
+		<tr>
+			<td><span>max speed</span></td>
+			<td><input id="max_speed" type="range" min="10" max="1000" value="400" /></td>
+		</tr>
+		<tr>
+			<td><span>max accel</span></td>
+			<td><input id="max_accel" type="range" min="0" max="500" value="100" /></td>
+		</tr>
+		<tr>
+			<td><span>sim speed</span></td>
+			<td><input id="interval_length" type="range" min="1" max="100" value="30" /></td>
 		</tr>
 		<tr>
 			<td><input id="clear" type="button" value="clear" /></td>
 		</tr>
+		<tr>
+			<td><input id="neighborhood" type="button" value="show" /></td>
+		</tr>
 		</table>
 	</div>
 </body>
+<script type="text/javascript">
+	var c=document.getElementById("the_canvas");
+	var ctx=c.getContext("2d");
+	ctx.globalAlpha = 0.5;
+	ctx.globalCompositeOperation = "copy";
+</script>
+<script type="text/javascript" src="globals.js"></script>
+<script type="text/javascript" src="math.js"></script>
+<script type="text/javascript" src="grid.js"></script>
+<script type="text/javascript" src="set.js"></script>
+<script type="text/javascript" src="boid.js"></script>
 <script type="text/javascript" src="boids.js"></script>
 <script type="text/javascript">
 setup();
