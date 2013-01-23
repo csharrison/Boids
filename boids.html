@@ -1,6 +1,6 @@
 1<html>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-<link type="text/css" rel="stylesheet" href="styles.css" />
+<link type="text/css" rel="stylesheet" href="css/styles.css" />
 <body>
 	<canvas id="the_canvas">
 	</canvas>
@@ -9,6 +9,10 @@
 		<tr>
 			<td><span>trails</span></td>
 			<td><input id="trails" type="range" min="0" max="100" value="40" /></td>
+		</tr>
+		<tr>
+			<td><span>repulsion</span></td>
+			<td><input id="repulsion" type="range" min="0" max="120" value="50" /></td>
 		</tr>
 		<tr>
 			<td><span>rep dist</span></td>
@@ -49,12 +53,12 @@
 	ctx.globalAlpha = 0.5;
 	ctx.globalCompositeOperation = "copy";
 </script>
-<script type="text/javascript" src="globals.js"></script>
-<script type="text/javascript" src="math.js"></script>
-<script type="text/javascript" src="grid.js"></script>
-<script type="text/javascript" src="set.js"></script>
-<script type="text/javascript" src="boid.js"></script>
-<script type="text/javascript" src="boids.js"></script>
+<script type="text/javascript" src="js/globals.js"></script>
+<script type="text/javascript" src="js/math.js"></script>
+<script type="text/javascript" src="js/grid.js"></script>
+<script type="text/javascript" src="js/set.js"></script>
+<script type="text/javascript" src="js/boid.js"></script>
+<script type="text/javascript" src="js/boids.js"></script>
 <script type="text/javascript">
 setup();
 </script>
