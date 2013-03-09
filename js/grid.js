@@ -17,7 +17,7 @@ Grid.prototype.resize = function(block_size, dimx, dimy){
 	for(var i = 0; i < dimy/block_size ; i++){
 		var row = [];
 		for(var j = 0; j < dimx/block_size ; j++){
-			var s = new ListSet();
+			var s = new Set();
 			row.push(s);
 		}
 		this.list[i] = row;

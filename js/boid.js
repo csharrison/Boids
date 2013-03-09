@@ -75,14 +75,12 @@ Boid.prototype.update = function(dimx, dimy){
 	var tavgy = 0;
 	
 	var neighbors = this.grid.get_neighbors(x,y, neighborhood_size);
-	var keys = neighbors.keys();
-	var l = keys.length;
 
 	attract_d = neighborhood_size;
 	orient_d = attract_d/2;
 
-	for(var i = 0; i < l ; i++){
-		var b = neighbors.get(keys[i]);
+	for(var i = 0; i < neighbors.length() ; i++){
+		var b = neighbors.get(i);
 		if(b.id == this.id){ continue };
 
 		var d = distance(x,y, b.x,b.y);
